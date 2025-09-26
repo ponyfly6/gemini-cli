@@ -6,7 +6,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { glob, escape } from 'glob';
+import { glob, escape } from 'glob';    // 根据Glob模式查找文件的匹配路径；   escape 用于转义 Glob 模式中的特殊字符，使其被视为普通字符。
 import type { ToolInvocation, ToolResult } from './tools.js';
 import { BaseDeclarativeTool, BaseToolInvocation, Kind } from './tools.js';
 import { shortenPath, makeRelative } from '../utils/paths.js';

@@ -3,6 +3,8 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
+// 是整个工具的核心架构
+// 定义了一个强大的工具系统，用于验证和执行各种工具调用，支持参数验证、执行确认以及结果处理。
 
 import type { FunctionDeclaration, PartListUnion } from '@google/genai';
 import { ToolErrorType } from './tool-error.js';
@@ -31,7 +33,7 @@ export interface ToolInvocation<
 
   /**
    * Determines what file system paths the tool will affect.
-   * @returns A list of such paths.
+   * @returns A list of such paths.      返回工具将影响的文件系统路径列表。
    */
   toolLocations(): ToolLocation[];
 

@@ -4,6 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ *   这个文件是gemini cli的总控配置中心，它把一个会用工具的对话式开发助手所需的一切开关、服务、注册表都集中在一起， 
+ * 一次会话（session）的运行时容器 + 依赖注入器（DI）
+ * 
+ * 
+ * 一句话： 一次cli 会话的“运行时容器 + 依赖注入器DI”： 收参数→存配置→按需创建各种服务（模型客户端、工具、影子 Git、文件发现、遥测、IDE 连接等）→统一对外提供 Getter。
+ * 
+ * 
+*/
+
 import * as path from 'node:path';
 import process from 'node:process';
 import type { ContentGeneratorConfig } from '../core/contentGenerator.js';
@@ -153,6 +163,7 @@ export type FlashFallbackHandler = (
   error?: unknown,
 ) => Promise<boolean | string | null>;
 
+// ConfigParameters 是构造函数接收的“总配置表”
 export interface ConfigParameters {
   sessionId: string;
   embeddingModel?: string;
@@ -289,6 +300,7 @@ export class Config {
   private readonly eventEmitter?: EventEmitter;
   private readonly useSmartEdit: boolean;
 
+  // 轻量级初始化
   constructor(params: ConfigParameters) {
     this.sessionId = params.sessionId;
     this.embeddingModel =
@@ -378,21 +390,23 @@ export class Config {
    * Must only be called once, throws if called again.
    */
   async initialize(): Promise<void> {
-    if (this.initialized) {
+    // 防冲重入
+    if (this.initialized) { 
       throw Error('Config was already initialized');
     }
     this.initialized = true;
     this.ideClient = await IdeClient.getInstance();
     // Initialize centralized FileDiscoveryService
-    this.getFileService();
+    this.getFileService();      // 集中化的文件发现服务
     if (this.getCheckpointingEnabled()) {
-      await this.getGitService();
+      await this.getGitService();       // lazy load 并初始化影子仓库（只有开启了检查点）
     }
     this.promptRegistry = new PromptRegistry();
-    this.toolRegistry = await this.createToolRegistry();
-    logCliConfiguration(this, new StartSessionEvent(this, this.toolRegistry));
+    this.toolRegistry = await this.createToolRegistry();        // 注册工具
+    logCliConfiguration(this, new StartSessionEvent(this, this.toolRegistry));      // 遥测
   }
 
+  // 切换账号 / 换鉴权： 核心思想重建一个客户端，再把历史搬家过去，这样就无缝切换鉴权和后端
   async refreshAuth(authMethod: AuthType) {
     // Save the current conversation history before creating a new client
     let existingHistory: Content[] = [];
@@ -815,8 +829,8 @@ export class Config {
   getUseSmartEdit(): boolean {
     return this.useSmartEdit;
   }
-
-  async getGitService(): Promise<GitService> {
+ 
+  async getGitService(): Promise<GitService> {      //  实现懒加载，（只有开启 checkpointing 并首次需要时才初始化），避免无谓开销/副作用。
     if (!this.gitService) {
       this.gitService = new GitService(this.targetDir, this.storage);
       await this.gitService.initialize();
@@ -828,6 +842,7 @@ export class Config {
     return this.fileExclusions;
   }
 
+  // 工具系统怎么装
   async createToolRegistry(): Promise<ToolRegistry> {
     const registry = new ToolRegistry(this, this.eventEmitter);
 
@@ -837,11 +852,11 @@ export class Config {
       const className = ToolClass.name;
       const toolName = ToolClass.Name || className;
       const coreTools = this.getCoreTools();
-      const excludeTools = this.getExcludeTools() || [];
+      const excludeTools = this.getExcludeTools() || [];     // 黑名单工具list （exclude 除了）
 
       let isEnabled = true; // Enabled by default if coreTools is not set.
       if (coreTools) {
-        isEnabled = coreTools.some(
+        isEnabled = coreTools.some(         // 数组的some方法： 只要有一个元素满足条件就返回true
           (tool) =>
             tool === className ||
             tool === toolName ||
@@ -885,7 +900,7 @@ export class Config {
     registerCoreTool(MemoryTool);
     registerCoreTool(WebSearchTool, this);
 
-    await registry.discoverAllTools();
+    await registry.discoverAllTools();        // 额外发现（动态扩展）
     return registry;
   }
 }

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import fs from 'node:fs';
+import fs from 'node:fs';           //node.js 16引入的内置模块的ESM显示导入路径，在ts里也完全支持，[import fs from 'fs' 过去的写法]，这样做的好处是：告诉编译器这是内置模块，不要去node_moudles里找。
 import path from 'node:path';
 import type { ToolInvocation, ToolResult } from './tools.js';
 import { BaseDeclarativeTool, BaseToolInvocation, Kind } from './tools.js';

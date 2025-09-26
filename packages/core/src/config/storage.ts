@@ -14,19 +14,22 @@ export const GOOGLE_ACCOUNTS_FILENAME = 'google_accounts.json';
 const TMP_DIR_NAME = 'tmp';
 
 export class Storage {
-  private readonly targetDir: string;
+  private readonly targetDir: string;     // 项目根目录，本地工程路径
 
   constructor(targetDir: string) {
     this.targetDir = targetDir;
   }
 
   static getGlobalGeminiDir(): string {
-    const homeDir = os.homedir();
+    const homeDir = os.homedir();       // 获取用户主目录 /home/pony
     if (!homeDir) {
       return path.join(os.tmpdir(), '.gemini');
     }
     return path.join(homeDir, GEMINI_DIR);
   }
+
+
+  // 接下来的路径存放的是全局配置和认证信息，对所有项目共用
 
   static getMcpOAuthTokensPath(): string {
     return path.join(Storage.getGlobalGeminiDir(), 'mcp-oauth-tokens.json');
@@ -56,16 +59,20 @@ export class Storage {
     return path.join(Storage.getGlobalGeminiDir(), TMP_DIR_NAME);
   }
 
+  // 接下来的是项目级别的，和项目路径绑定
+
   getGeminiDir(): string {
     return path.join(this.targetDir, GEMINI_DIR);
   }
 
+  // 项目的临时目录存放在了全局 .gemini/tmp/ 下，用项目路径的 hash 来区分不同项目。
   getProjectTempDir(): string {
     const hash = this.getFilePathHash(this.getProjectRoot());
     const tempDir = Storage.getGlobalTempDir();
     return path.join(tempDir, hash);
   }
 
+  // 确保项目的临时目录存在，不存在就自动创建
   ensureProjectTempDirExists(): void {
     fs.mkdirSync(this.getProjectTempDir(), { recursive: true });
   }
@@ -108,6 +115,7 @@ export class Storage {
     return path.join(this.getExtensionsDir(), 'gemini-extension.json');
   }
 
+  // 保存cli 的历史命令 （类似.bash_history）
   getHistoryFilePath(): string {
     return path.join(this.getProjectTempDir(), 'shell_history');
   }

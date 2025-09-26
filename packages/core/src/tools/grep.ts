@@ -19,6 +19,14 @@ import type { Config } from '../config/config.js';
 import type { FileExclusions } from '../utils/ignorePatterns.js';
 import { ToolErrorType } from './tool-error.js';
 
+/** 
+ * GrepTool: 是一个安全、可移至、可扩展的“代码库全文检索”工具
+ * 
+ * 它先用 git grep 吃性能红利，退化到系统 grep，最后必要时用 JS 兜底，确保“不管你的环境怎样，都能搜”。
+ * 
+ * 能用 git grep 就用 git grep；不行就用系统 grep；再不行用 JS 自己扫文件。
+*/
+
 // --- Interfaces ---
 
 /**
@@ -28,17 +36,17 @@ export interface GrepToolParams {
   /**
    * The regular expression pattern to search for in file contents
    */
-  pattern: string;
+  pattern: string;     // 正则表达式
 
   /**
    * The directory to search in (optional, defaults to current directory relative to root)
    */
-  path?: string;
+  path?: string;    //  限定从某个子目录搜索（相对项目根）
 
   /**
    * File pattern to include in the search (e.g. "*.js", "*.{ts,tsx}")
    */
-  include?: string;
+  include?: string;  //  include: 选填，glob 文件过滤（如 "*.ts", "src/**", "*.{ts,tsx}"
 }
 
 /**
